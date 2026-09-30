@@ -1,11 +1,8 @@
-'use client';
-
 import React, { useRef, useMemo, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Edges, OrbitControls, Html, Grid, ContactShadows } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
 import * as THREE from 'three';
-import { motion } from 'motion/react';
 
 const Propeller = () => {
   const meshRef = useRef<THREE.Group>(null);
@@ -87,7 +84,7 @@ const HolographicEngine: React.FC<HolographicEngineProps> = ({ anomalyCylinder }
         const isAnomaly = anomalyCylinder === cyl.id;
         const isHovered = hoveredCyl === cyl.id;
         const color = isAnomaly ? '#ef4444' : (isHovered ? '#06b6d4' : '#10b981');
-        const emissiveIntensity = isAnomaly ? (Math.sin(Date.now() / 150) * 2 + 6) : (isHovered ? 3 : 1.5);
+        const emissiveIntensity = isAnomaly ? 6 : (isHovered ? 3 : 1.5);
 
         return (
           <mesh 

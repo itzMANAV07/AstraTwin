@@ -1,10 +1,10 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 
 export default function PrivacyPolicy() {
   return (
     <div className="min-h-screen bg-zinc-950 text-slate-200 px-8 py-16 max-w-3xl mx-auto">
       <Link
-        href="/"
+        to="/"
         className="text-xs text-zinc-500 hover:text-zinc-300 uppercase tracking-wider font-mono mb-8 block"
       >
         &larr; Return to Dashboard
@@ -21,12 +21,8 @@ export default function PrivacyPolicy() {
             1. DATA COLLECTION AND PROCESSING
           </h2>
           <p>
-            AstraTwin processes engine telemetry data transmitted from MALE UAV
-            aero-piston engine monitoring systems. All telemetry is processed
-            through edge-compute nodes with asymmetric compression before
-            transmission. Raw sensor data is retained on-device and only
-            aggregated health scores and anomaly vectors are transmitted to
-            ground stations.
+            This prototype uses synthetic engine telemetry generated in the browser.
+            No operational aircraft data is collected or transmitted.
           </p>
         </section>
 
@@ -35,11 +31,8 @@ export default function PrivacyPolicy() {
             2. DATA RETENTION
           </h2>
           <p>
-            Processed health indices and maintenance advisories are retained for
-            the operational lifecycle of each engine unit plus five years for
-            fleet reliability analytics. Raw telemetry buffers on edge devices
-            are overwritten on a rolling 72-hour basis unless flagged by an
-            anomaly event.
+            Simulation data remains in the current browser session. The dashboard
+            does not retain operational records.
           </p>
         </section>
 
@@ -48,10 +41,7 @@ export default function PrivacyPolicy() {
             3. SECURITY CLASSIFICATION
           </h2>
           <p>
-            All data processed by AstraTwin is classified under DRDO security
-            protocols. Access is restricted to authorized maintenance personnel,
-            flight operations officers, and designated engineering staff with
-            appropriate clearance levels.
+            This demonstration is not a classified or operational DRDO system.
           </p>
         </section>
 
@@ -60,10 +50,8 @@ export default function PrivacyPolicy() {
             4. THIRD-PARTY DATA SHARING
           </h2>
           <p>
-            No engine telemetry, health scores, or maintenance data is shared
-            with external third parties. All processing occurs within
-            DRDO-controlled infrastructure. Edge-AI inference models operate
-            entirely on-device without external network dependencies.
+            Simulated telemetry processing runs locally in this browser. No
+            telemetry service or external model is connected.
           </p>
         </section>
 

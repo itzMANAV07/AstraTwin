@@ -1,5 +1,3 @@
-"use client";
-
 import { useEngineSimulation } from "@/hooks/useEngineSimulation";
 import { Header } from "@/components/header";
 import { DirectorPanel } from "@/components/director-panel";
@@ -7,10 +5,13 @@ import { TelemetryChart } from "@/components/telemetry-chart";
 import { SpatialTwin } from "@/components/spatial-twin";
 import { RULChart } from "@/components/rul-chart";
 import { MaintenanceAdvisory } from "@/components/maintenance-advisory";
+import { Navigate, Route, Routes } from "react-router-dom";
+import PrivacyPolicy from "@/app/privacy/page";
+import TermsAndConditions from "@/app/terms/page";
 
 import { motion } from 'motion/react';
 
-export default function DashboardPage() {
+function DashboardPage() {
   const {
     telemetry,
     historicalData,
@@ -36,12 +37,12 @@ export default function DashboardPage() {
       opacity: 1,
       transition: { staggerChildren: 0.1 }
     }
-  };
+  } as const;
 
   const itemVariants = {
     hidden: { opacity: 0, y: 20 },
     show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
-  };
+  } as const;
 
   return (
     <div className="min-h-screen bg-zinc-950 pb-20 pt-14 flex flex-col relative">
@@ -151,4 +152,8 @@ export default function DashboardPage() {
       <DirectorPanel mode={mode} onModeChange={setMode} />
     </div>
   );
+}
+
+export default function App() {
+  return <Routes><Route path="/" element={<DashboardPage />} /><Route path="/privacy" element={<PrivacyPolicy />} /><Route path="/terms" element={<TermsAndConditions />} /><Route path="*" element={<Navigate to="/" replace />} /></Routes>;
 }

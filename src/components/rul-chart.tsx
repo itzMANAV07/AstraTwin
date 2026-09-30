@@ -1,8 +1,5 @@
-'use client';
-
 import {
   ComposedChart,
-  AreaChart,
   Area,
   Line,
   XAxis,
@@ -55,7 +52,7 @@ export const RULChart = ({ data, anomalyDetected }: RULChartProps) => {
             />
             <Area 
               type="monotone" 
-              dataKey={["lower", "upper"] as any} 
+              dataKey="upper"
               stroke="none" 
               fill={color} 
               fillOpacity={fillOpacity} 

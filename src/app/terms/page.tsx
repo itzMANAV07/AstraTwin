@@ -1,10 +1,10 @@
-import Link from "next/link";
+import { Link } from "react-router-dom";
 
 export default function TermsAndConditions() {
   return (
     <div className="min-h-screen bg-zinc-950 text-slate-200 px-8 py-16 max-w-3xl mx-auto">
       <Link
-        href="/"
+        to="/"
         className="text-xs text-zinc-500 hover:text-zinc-300 uppercase tracking-wider font-mono mb-8 block"
       >
         &larr; Return to Dashboard
@@ -23,11 +23,8 @@ export default function TermsAndConditions() {
             1. AUTHORIZED USE
           </h2>
           <p>
-            AstraTwin is authorized exclusively for use by DRDO personnel,
-            contracted maintenance engineers, and designated UAV flight
-            operations staff. Unauthorized access to this system is a violation
-            of the Information Technology Act, 2000 and applicable defense
-            regulations.
+            AstraTwin here is a synthetic demonstration for SIH26054. It is not
+            an operational aircraft monitoring system.
           </p>
         </section>
 
@@ -36,12 +33,9 @@ export default function TermsAndConditions() {
             2. SYSTEM LIMITATIONS
           </h2>
           <p>
-            AstraTwin provides predictive maintenance advisories based on
-            statistical inference and physics-based residual analysis. All
-            maintenance actions recommended by the system must be validated by
-            certified aero-engine maintenance personnel before execution.
-            Automated advisories do not replace standard maintenance inspection
-            protocols.
+            All outputs are estimates generated from prototype assumptions.
+            They are not engineering guidance and must not be used for flight
+            or maintenance decisions.
           </p>
         </section>
 

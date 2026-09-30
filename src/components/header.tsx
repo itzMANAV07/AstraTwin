@@ -1,5 +1,3 @@
-'use client'
-
 import React from 'react';
 
 export interface HeaderProps {
@@ -8,7 +6,7 @@ export interface HeaderProps {
   physicsResidual: number;
 }
 
-export const Header: React.FC<HeaderProps> = ({ mode, healthIndex, physicsResidual }) => {
+export const Header: React.FC<HeaderProps> = ({ mode, healthIndex: _healthIndex, physicsResidual: _physicsResidual }) => {
   return (
     <header className="fixed top-0 left-0 w-full h-14 bg-zinc-900/95 backdrop-blur border-b border-zinc-800 z-50 flex items-center justify-between px-6">
       <div className="flex items-center gap-4">
@@ -17,7 +15,7 @@ export const Header: React.FC<HeaderProps> = ({ mode, healthIndex, physicsResidu
         <span className="text-xs text-zinc-400">DRDO Predictive Maintenance Digital Twin</span>
       </div>
       
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2" title={`Health ${_healthIndex.toFixed(1)} percent, residual ${_physicsResidual.toFixed(1)} percent`}>
         <div 
           className={`w-2 h-2 rounded-none ${
             mode === 'NORMAL' 
