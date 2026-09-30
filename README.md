@@ -1,36 +1,59 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# AstraTwin
 
-## Getting Started
+AstraTwin is a React + Vite prototype for SIH26054, DRDO's digital twin concept for aero-piston engines in MALE UAVs. The dashboard keeps the existing dark telemetry layout and runs a synthetic edge-to-ground simulation entirely in the browser.
 
-First, run the development server:
+**SIMULATED DATA - SIH26054 PROTOTYPE.** This project does not connect to aircraft sensors, ground stations, or operational maintenance systems. No backend, MQTT broker, InfluxDB, or LLM integration is built.
 
-```bash
+## Run locally
+
+```sh
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Vite prints the local URL. Other useful commands:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```sh
+npm run lint
+npm test
+npm run build
+npm run preview
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Press `F` while running the development server to show or hide the live FPS readout. The optional `?fps=1` query parameter opens the same development readout for measurement. Production builds do not include it.
 
-## Learn More
+## Browser simulation architecture
 
-To learn more about Next.js, take a look at the following resources:
+```mermaid
+flowchart LR
+    A[Seeded 10 Hz engine simulator] --> B[ISA baseline and residuals]
+    B --> C[Isolation Forest and persistence filter]
+    C --> D[Health, RUL, and mission reliability]
+    D --> E[32 byte health vector at 1 Hz]
+    E --> F[React dashboard]
+    A --> G[10 Hz chart stream]
+    G --> F
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+The worker produces normal, high-altitude, injector, lubrication-loss, and CHT sensor-drift scenarios. The charts read from a 300-frame ring buffer. The simulated packet encoder counts raw frames and transmitted health vectors and derives the bandwidth estimate displayed in the header. The protocol assumptions and equations are in [docs/PHYSICS.md](docs/PHYSICS.md).
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Planned architecture
 
-## Deploy on Vercel
+The future service design may use FastAPI for an API, MQTT for telemetry transport, InfluxDB for time-series storage, and an LLM integration for advisory drafting. These services are **planned, not built**. The current dashboard uses local TypeScript code and template-based advisories.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Prototype measurements
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Measurements below came from a foreground in-app browser preview on 30 September 2026. FPS varies with the browser and rendering load.
+
+- FPS readout: 72 frames/s during a settled high-altitude scenario and 93 frames/s during a nominal preview.
+- Bandwidth sample: 356 raw bytes/s and 32 transmitted bytes/s, shown as 91.0% estimated savings. The raw estimate uses 36-byte frames at 10 Hz. The health vector is 32 bytes at 1 Hz, including an eight-byte protocol overhead assumption.
+
+These are local prototype measurements, not deployment targets. The browser worker keeps simulation work off the UI thread, the 3D twin is memoized, and its renderer uses a capped pixel ratio. FPS remains dependent on available browser and graphics resources.
+
+## Limitations
+
+- All samples, fault signatures, noise values, engine maps, confidence bounds, and mission reliability values are synthetic prototype assumptions.
+- The physics model is intentionally small and does not represent an approved aero-engine thermodynamic model.
+- The Isolation Forest is trained on generated healthy residual vectors. Sensor isolation, cylinder attribution, health decay, and RUL fitting need validation against recorded engine data before operational use.
+- Advisory text is template-based demo output and requires technician review. It is not maintenance guidance.
+- The 32-byte packet and bandwidth calculation model one simulated protocol. They do not include a real transport stack or network measurements.
