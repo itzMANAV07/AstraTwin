@@ -36,7 +36,7 @@ The virtual injector fault uses expected CHT/fuel-flow residual signatures for f
 
 ## Health, remaining useful life, and mission reliability
 
-Health is bounded from 0 to 100 and starts at 100 for a new browser simulation. Persistent mechanical faults decrease health by 0.00035 points per 10 Hz update. A simple linear fit over the recent health trend estimates the rate per flight hour. Remaining useful life projects that trend to health 30. A flat or short trend is shown as `INSUFFICIENT TREND`. The plotted lower and upper bounds widen with forecast distance as an illustrative confidence cone, not a calibrated statistical interval.
+Health is bounded from 0 to 100 and starts at 100 for a new browser simulation. Persistent mechanical faults decrease health by 0.005 points per 10 Hz update as an accelerated prototype aging assumption. A simple linear fit over the recent health trend estimates the rate per flight hour. Remaining useful life projects that trend to health 30. A flat or short trend is shown as `INSUFFICIENT TREND`. The plotted lower and upper bounds widen with forecast distance as an illustrative confidence cone, not a calibrated statistical interval.
 
 Mission reliability uses `exp(-hazard_per_hour * mission_hours)`, with a default six-hour horizon and a prototype hazard model based on health and detector status. Recommendation cutoffs are `CONTINUE` at 90 percent and above, `CAUTION` below 90 percent, and `RETURN` below 65 percent or health below 45. These values are configurable assumptions, not operational guidance.
 

@@ -1,11 +1,12 @@
+import { memo } from 'react';
 import {
   LineChart,
   Line,
   XAxis,
   YAxis,
-  CartesianGrid,
   ResponsiveContainer,
-  ReferenceLine
+  ReferenceLine,
+  Tooltip
 } from 'recharts';
 
 export interface TelemetryChartProps {
@@ -17,7 +18,7 @@ export interface TelemetryChartProps {
   currentValue: number;
 }
 
-export const TelemetryChart = ({
+export const TelemetryChart = memo(({ 
   data,
   label,
   color,
@@ -36,7 +37,6 @@ export const TelemetryChart = ({
       <div style={{ height: '120px', width: '100%' }}>
         <ResponsiveContainer width="100%" height="100%">
           <LineChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#27272a" vertical={false} />
             <XAxis dataKey="timestamp" hide />
             <YAxis
               domain={['auto', 'auto']}
@@ -48,6 +48,7 @@ export const TelemetryChart = ({
             {warningThreshold !== undefined && (
               <ReferenceLine y={warningThreshold} stroke="#f43f5e" strokeDasharray="3 3" />
             )}
+            <Tooltip contentStyle={{ backgroundColor: '#09090b', border: '1px solid #3f3f46', borderRadius: 0 }} labelStyle={{ color: '#a1a1aa' }} itemStyle={{ color }} />
             <Line
               type="monotone"
               dataKey="value"
@@ -61,4 +62,4 @@ export const TelemetryChart = ({
       </div>
     </div>
   );
-};
+});

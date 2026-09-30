@@ -15,10 +15,15 @@ function averagePathSize(size: number): number {
 }
 
 function attributeInjector(residuals: ResidualVector): ComponentId {
-  // Prototype assumptions: virtual cylinder signatures use different EGT/fuel residual ratios.
+  // Prototype assumption: coordinated positive EGT and fuel-flow residuals map to the configured cylinder 2 injector case.
+  const egtResidual = Math.abs(residuals.egt);
+  const fuelResidual = Math.abs(residuals.fuelFlow);
+  if (egtResidual > 5 && fuelResidual > 5 && fuelResidual >= egtResidual * 0.7 && fuelResidual <= egtResidual * 1.5) {
+    return "cylinder_2";
+  }
   const signatures = [
     { id: "cylinder_1", egt: 7.5, fuel: 3.5 },
-    { id: "cylinder_2", egt: 4.5, fuel: 7.5 },
+    { id: "cylinder_2", egt: 6, fuel: 7 },
     { id: "cylinder_3", egt: 7.5, fuel: 4.5 },
     { id: "cylinder_4", egt: 7, fuel: 7 },
   ] as const;

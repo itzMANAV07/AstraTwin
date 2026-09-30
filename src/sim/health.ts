@@ -8,7 +8,7 @@ export class HealthEstimator {
   private seconds = 0;
   update(detector: DetectorResult, missionHours = 6): HealthResult {
     this.seconds += 0.1;
-    if (detector.anomalyDetected && detector.faultType !== "SENSOR_SUSPECT") this.health = Math.max(0, this.health - 0.00035);
+    if (detector.anomalyDetected && detector.faultType !== "SENSOR_SUSPECT") this.health = Math.max(0, this.health - 0.005);
     this.samples.push({ seconds: this.seconds, health: this.health });
     if (this.samples.length > 600) this.samples.shift();
     const first = this.samples[0]; const last = this.samples[this.samples.length - 1];

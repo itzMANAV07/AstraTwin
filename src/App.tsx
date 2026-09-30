@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useState } from "react";
 import { useEngineSimulation } from "@/hooks/useEngineSimulation";
 import { Header } from "@/components/header";
 import { DirectorPanel } from "@/components/director-panel";
@@ -5,11 +6,20 @@ import { TelemetryChart } from "@/components/telemetry-chart";
 import { SpatialTwin } from "@/components/spatial-twin";
 import { RULChart } from "@/components/rul-chart";
 import { MaintenanceAdvisory } from "@/components/maintenance-advisory";
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Link, Navigate, Route, Routes } from "react-router-dom";
 import PrivacyPolicy from "@/app/privacy/page";
 import TermsAndConditions from "@/app/terms/page";
 
 import { motion } from 'motion/react';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.1 } },
+} as const;
+const itemVariants = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } },
+} as const;
 
 function DashboardPage() {
   const {
@@ -21,35 +31,48 @@ function DashboardPage() {
     physicsResidual,
     anomalyDetected,
     rulProjection,
+    detector,
+    health,
+    bandwidthSavedPercent,
+    rawBytesPerSecond,
+    transmittedBytesPerSecond,
   } = useEngineSimulation();
+  const [showFps, setShowFps] = useState(() => import.meta.env.DEV && new URLSearchParams(window.location.search).get("fps") === "1");
+  const [fps, setFps] = useState(0);
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => { if (event.key.toLowerCase() === "f" && import.meta.env.DEV) setShowFps((value) => !value); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
+  useEffect(() => {
+    if (!showFps || !import.meta.env.DEV) return;
+    let frames = 0; let start = performance.now(); let frameId = 0;
+    const measure = (now: number) => {
+      frames++;
+      if (now - start >= 1000) { setFps(Math.round(frames * 1000 / (now - start))); frames = 0; start = now; }
+      frameId = requestAnimationFrame(measure);
+    };
+    frameId = requestAnimationFrame(measure);
+    return () => cancelAnimationFrame(frameId);
+  }, [showFps]);
 
-  const chartData = {
-    rpm: historicalData.map((d) => ({ timestamp: d.timestamp, value: d.rpm })),
-    cht: historicalData.map((d) => ({ timestamp: d.timestamp, value: d.cht })),
-    egt: historicalData.map((d) => ({ timestamp: d.timestamp, value: d.egt })),
-    fuelFlow: historicalData.map((d) => ({ timestamp: d.timestamp, value: d.fuelFlow })),
-    oilPressure: historicalData.map((d) => ({ timestamp: d.timestamp, value: d.oilPressure })),
-  };
-
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    show: {
-      opacity: 1,
-      transition: { staggerChildren: 0.1 }
-    }
-  } as const;
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 20 },
-    show: { opacity: 1, y: 0, transition: { type: "spring", stiffness: 300, damping: 24 } }
-  } as const;
+  const chartData = useMemo(() => {
+    const chartFrames = historicalData.length > 150 ? historicalData.filter((_, index) => index % 2 === 0 || index === historicalData.length - 1) : historicalData;
+    return {
+      rpm: chartFrames.map((d) => ({ timestamp: d.timestamp, value: d.rpm })),
+      cht: chartFrames.map((d) => ({ timestamp: d.timestamp, value: d.cht })),
+      egt: chartFrames.map((d) => ({ timestamp: d.timestamp, value: d.egt })),
+      fuelFlow: chartFrames.map((d) => ({ timestamp: d.timestamp, value: d.fuelFlow })),
+      oilPressure: chartFrames.map((d) => ({ timestamp: d.timestamp, value: d.oilPressure })),
+    };
+  }, [historicalData]);
 
   return (
     <div className="min-h-screen bg-zinc-950 pb-20 pt-14 flex flex-col relative">
       {/* Global CSS background grid for a more virtual feel */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(24,24,27,0.3)_1px,transparent_1px),linear-gradient(90deg,rgba(24,24,27,0.3)_1px,transparent_1px)] bg-[size:40px_40px] pointer-events-none z-0" />
 
-      <Header mode={mode} healthIndex={healthIndex} physicsResidual={physicsResidual} />
+      <Header mode={mode} healthIndex={healthIndex} physicsResidual={physicsResidual} bandwidthSavedPercent={bandwidthSavedPercent} rawBytesPerSecond={rawBytesPerSecond} transmittedBytesPerSecond={transmittedBytesPerSecond} />
 
       <motion.main 
         variants={containerVariants}
@@ -107,10 +130,14 @@ function DashboardPage() {
               <TelemetryChart
                 data={chartData.fuelFlow}
                 label="Fuel Flow (Injector)"
-                color="#8b5cf6"
+                color="#14b8a6"
                 unit="L/h"
                 currentValue={telemetry?.fuelFlow ?? 0}
               />
+            </div>
+            <div className="grid grid-cols-2 gap-2 border border-zinc-800 bg-zinc-900/80 px-3 py-2 font-mono text-[10px] uppercase text-zinc-400">
+              <div><span className="block text-zinc-500">THRESHOLD ALARM</span><span className={telemetry && (telemetry.cht > 210 || telemetry.egt > 750 || telemetry.oilPressure < 50) ? "text-rose-400" : "text-emerald-400"}>{telemetry && (telemetry.cht > 210 || telemetry.egt > 750 || telemetry.oilPressure < 50) ? "ALARM" : "NO ALARM"}</span></div>
+              <div><span className="block text-zinc-500">ASTRATWIN</span><span className={detector?.sensorStatus === "SENSOR CHECK" ? "text-amber-400" : anomalyDetected ? "text-rose-400" : "text-emerald-400"}>{detector?.sensorStatus === "SENSOR CHECK" ? "SENSOR CHECK" : anomalyDetected ? "ANOMALY" : "NOMINAL"}</span></div>
             </div>
           </motion.div>
 
@@ -122,11 +149,11 @@ function DashboardPage() {
                   <span className="w-2 h-2 bg-cyan-500 rounded-full animate-pulse" />
                   Spatial Twin
                 </span>
-                <span className={`text-xs font-mono px-2 py-1 rounded-none shadow-sm ${anomalyDetected ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'}`}>
-                  RESIDUAL: {physicsResidual.toFixed(1)}%
+                <span className={`text-xs font-mono px-2 py-1 rounded-none shadow-sm ${detector?.sensorStatus === 'SENSOR CHECK' ? 'bg-amber-500/20 text-amber-400 border border-amber-500/50' : anomalyDetected ? 'bg-rose-500/20 text-rose-400 border border-rose-500/50' : 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/50'}`}>
+                  {detector?.sensorStatus === 'SENSOR CHECK' ? 'SENSOR CHECK' : `RESIDUAL: ${physicsResidual.toFixed(1)} σ`}
                 </span>
               </div>
-              <SpatialTwin anomalyLocation={anomalyDetected ? 'cylinder_2' : null} />
+              <SpatialTwin anomalyLocation={detector?.componentId ?? null} sensorSuspect={detector?.sensorStatus === 'SENSOR CHECK'} />
             </div>
           </motion.div>
         </div>
@@ -136,20 +163,25 @@ function DashboardPage() {
           {/* RUL Forecast Panel */}
           <motion.div variants={itemVariants} className="transition-transform hover:-translate-y-1 duration-300">
             <div className="h-full shadow-[0_0_15px_rgba(0,0,0,0.3)]">
-              <RULChart data={rulProjection} anomalyDetected={anomalyDetected} />
+              <RULChart data={rulProjection} anomalyDetected={anomalyDetected} missionReliability={health?.missionReliability ?? 1} recommendation={health?.recommendation ?? 'CONTINUE'} sensorStatus={detector?.sensorStatus ?? 'NOMINAL'} rulHours={health?.rulHours ?? null} trendStatus={health?.trendStatus ?? 'INSUFFICIENT TREND'} />
             </div>
           </motion.div>
 
           {/* Maintenance Advisory Panel */}
           <motion.div variants={itemVariants} className="transition-transform hover:-translate-y-1 duration-300">
             <div className="h-full shadow-[0_0_15px_rgba(0,0,0,0.3)]">
-              <MaintenanceAdvisory anomalyDetected={anomalyDetected} mode={mode} />
+              <MaintenanceAdvisory anomalyDetected={anomalyDetected} detector={detector} health={health} telemetry={telemetry} />
             </div>
           </motion.div>
         </div>
+        <footer className="flex justify-end gap-4 border-t border-zinc-800 pt-2 text-[10px] font-mono uppercase text-zinc-600">
+          <Link className="hover:text-zinc-300" to="/privacy">Privacy Policy</Link>
+          <Link className="hover:text-zinc-300" to="/terms">Terms and Conditions</Link>
+        </footer>
       </motion.main>
 
       <DirectorPanel mode={mode} onModeChange={setMode} />
+      {showFps && import.meta.env.DEV && <div className="fixed bottom-16 right-4 z-50 border border-zinc-700 bg-zinc-900 px-2 py-1 font-mono text-[10px] text-cyan-400">FPS {fps}</div>}
     </div>
   );
 }

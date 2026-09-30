@@ -1,8 +1,9 @@
 import React from 'react';
+import type { EngineMode } from '@/sim/types';
 
 export interface DirectorPanelProps {
-  mode: 'NORMAL' | 'HIGH_ALTITUDE' | 'ANOMALY';
-  onModeChange: (mode: 'NORMAL' | 'HIGH_ALTITUDE' | 'ANOMALY') => void;
+  mode: EngineMode;
+  onModeChange: (mode: EngineMode) => void;
 }
 
 export const DirectorPanel: React.FC<DirectorPanelProps> = ({ mode, onModeChange }) => {
@@ -41,6 +42,22 @@ export const DirectorPanel: React.FC<DirectorPanelProps> = ({ mode, onModeChange
           }`}
         >
           TRIGGER INJECTOR ANOMALY
+        </button>
+        <button
+          onClick={() => onModeChange('OIL_PRESSURE_LOSS')}
+          className={`px-2 py-2 text-[10px] font-mono uppercase tracking-wider rounded-none border transition-colors ${
+            mode === 'OIL_PRESSURE_LOSS' ? 'bg-zinc-800 border-cyan-500 text-cyan-500' : 'border-zinc-600 text-zinc-300 hover:bg-zinc-800'
+          }`}
+        >
+          SIMULATE OIL PRESSURE LOSS
+        </button>
+        <button
+          onClick={() => onModeChange('SENSOR_DRIFT')}
+          className={`px-2 py-2 text-[10px] font-mono uppercase tracking-wider rounded-none border transition-colors ${
+            mode === 'SENSOR_DRIFT' ? 'bg-zinc-800 border-amber-500 text-amber-500' : 'border-zinc-600 text-zinc-300 hover:bg-zinc-800'
+          }`}
+        >
+          SIMULATE SENSOR DRIFT
         </button>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import React, { useRef, useMemo, useState } from 'react';
+import React, { memo, useRef, useMemo, useState } from 'react';
 import { Canvas, useFrame } from '@react-three/fiber';
 import { Edges, OrbitControls, Html, Grid, ContactShadows } from '@react-three/drei';
 import { EffectComposer, Bloom } from '@react-three/postprocessing';
@@ -51,9 +51,10 @@ const Scanner = () => {
 
 interface HolographicEngineProps {
   anomalyCylinder: string | null;
+  sensorSuspect: boolean;
 }
 
-const HolographicEngine: React.FC<HolographicEngineProps> = ({ anomalyCylinder }) => {
+const HolographicEngine: React.FC<HolographicEngineProps> = ({ anomalyCylinder, sensorSuspect }) => {
   const cylinders = useMemo(() => [
     { id: 'cylinder_1', position: [-1.2, 0, 0] as [number, number, number], label: 'CYL-1' },
     { id: 'cylinder_2', position: [-0.4, 0, 0] as [number, number, number], label: 'CYL-2' },
@@ -62,6 +63,11 @@ const HolographicEngine: React.FC<HolographicEngineProps> = ({ anomalyCylinder }
   ], []);
 
   const [hoveredCyl, setHoveredCyl] = useState<string | null>(null);
+  const materialRefs = useRef<Record<string, THREE.MeshStandardMaterial | null>>({});
+  useFrame(({ clock }) => {
+    const material = anomalyCylinder ? materialRefs.current[anomalyCylinder] : null;
+    if (material) material.emissiveIntensity = 5 + Math.sin(clock.elapsedTime * 7) * 2;
+  });
 
   return (
     <group position={[0, 0.5, 0]}>
@@ -95,6 +101,7 @@ const HolographicEngine: React.FC<HolographicEngineProps> = ({ anomalyCylinder }
           >
             <cylinderGeometry args={[0.3, 0.3, 1.2, 32]} />
             <meshStandardMaterial
+              ref={(material) => { materialRefs.current[cyl.id] = material; }}
               color={color}
               emissive={color}
               emissiveIntensity={emissiveIntensity}
@@ -114,6 +121,20 @@ const HolographicEngine: React.FC<HolographicEngineProps> = ({ anomalyCylinder }
           </mesh>
         );
       })}
+
+      {(anomalyCylinder === 'lubrication' || anomalyCylinder === 'cooling' || sensorSuspect) && (
+        <group position={anomalyCylinder === 'lubrication' ? [1.8, -0.65, 0.8] : [0, 1.15, 0.7]}>
+          <mesh>
+            <octahedronGeometry args={[0.22, 0]} />
+            <meshStandardMaterial color={sensorSuspect ? '#f59e0b' : '#06b6d4'} emissive={sensorSuspect ? '#f59e0b' : '#06b6d4'} emissiveIntensity={3} />
+          </mesh>
+          <Html position={[0, 0.45, 0]} center distanceFactor={10}>
+            <div className={`px-2 py-1 text-[10px] font-mono border backdrop-blur-md rounded-sm whitespace-nowrap ${sensorSuspect ? 'bg-amber-500/20 border-amber-500 text-amber-300' : 'bg-cyan-500/20 border-cyan-500 text-cyan-300'}`}>
+              {sensorSuspect ? 'SENSOR CHECK' : anomalyCylinder?.toUpperCase()}
+            </div>
+          </Html>
+        </group>
+      )}
       
       <Scanner />
       <Propeller />
@@ -123,20 +144,21 @@ const HolographicEngine: React.FC<HolographicEngineProps> = ({ anomalyCylinder }
 
 export interface SpatialTwinProps {
   anomalyLocation: string | null;
+  sensorSuspect: boolean;
 }
 
-export const SpatialTwin: React.FC<SpatialTwinProps> = ({ anomalyLocation }) => {
+export const SpatialTwin: React.FC<SpatialTwinProps> = memo(({ anomalyLocation, sensorSuspect }) => {
   return (
     <div className="w-full h-[400px] bg-zinc-950 rounded-md border border-zinc-800 overflow-hidden relative cursor-crosshair">
       {/* Background digital scanner grid overlay via CSS */}
       <div className="absolute inset-0 bg-[linear-gradient(rgba(24,24,27,0.1)_1px,transparent_1px),linear-gradient(90deg,rgba(24,24,27,0.1)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none z-10" />
       
-      <Canvas camera={{ position: [0, 3, 6], fov: 45 }}>
+      <Canvas dpr={[1, 1.25]} camera={{ position: [0, 3, 6], fov: 45 }}>
         <ambientLight intensity={0.4} />
         <pointLight position={[10, 10, 10]} intensity={1} />
         <spotLight position={[0, 5, 0]} intensity={2} color="#06b6d4" angle={0.5} penumbra={1} />
         
-        <HolographicEngine anomalyCylinder={anomalyLocation} />
+        <HolographicEngine anomalyCylinder={anomalyLocation} sensorSuspect={sensorSuspect} />
         
         {/* High-tech Ground Plane Grid */}
         <Grid 
@@ -173,6 +195,6 @@ export const SpatialTwin: React.FC<SpatialTwinProps> = ({ anomalyLocation }) => 
       </Canvas>
     </div>
   );
-};
+});
 
 export default SpatialTwin;

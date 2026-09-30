@@ -1,47 +1,46 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from "react";
+import type { DetectorResult, HealthResult, TelemetryPoint } from "@/sim/types";
 
 export interface MaintenanceAdvisoryProps {
   anomalyDetected: boolean;
-  mode: 'NORMAL' | 'HIGH_ALTITUDE' | 'ANOMALY';
+  detector: DetectorResult | null;
+  health: HealthResult | null;
+  telemetry: TelemetryPoint | null;
 }
 
-const NORMAL_MESSAGE = 'SYSTEM OPTIMAL. All parameters within nominal operating envelope. Edge-AI Isolation Forest: No anomalous patterns detected. Next scheduled maintenance: 120 flight hours.';
-const ANOMALY_MESSAGE = 'DIAGNOSTIC ALARM: Fuel Flow vs Thermodynamic Baseline deviation > 15%. Isolation Forest confidence: 0.94. ACTION REQUIRED: Isolate Cylinder 2. Inspect injector pulse-width configuration upon UAV recovery. Estimated time to critical failure: 4.2 flight hours.';
-
-export const MaintenanceAdvisory: React.FC<MaintenanceAdvisoryProps> = ({ anomalyDetected, mode }) => {
-  const [displayedText, setDisplayedText] = useState('');
-
+function Typewriter({ text, tone }: { text: string; tone: "rose" | "amber" | "emerald" }) {
+  const [visibleChars, setVisibleChars] = useState(0);
   useEffect(() => {
-    if (mode === 'ANOMALY') {
-      let currentIndex = 0;
-      const interval = setInterval(() => {
-        currentIndex++;
-        setDisplayedText(ANOMALY_MESSAGE.substring(0, currentIndex));
-        if (currentIndex >= ANOMALY_MESSAGE.length) clearInterval(interval);
-      }, 30);
+    const timer = setInterval(() => setVisibleChars((count) => {
+      const next = Math.min(text.length, count + 1);
+      if (next >= text.length) clearInterval(timer);
+      return next;
+    }), 30);
+    return () => clearInterval(timer);
+  }, [text]);
+  const color = tone === "rose" ? "text-rose-400" : tone === "amber" ? "text-amber-400" : "text-zinc-300";
+  return <div className={color}><span>{text.slice(0, visibleChars)}</span>{visibleChars < text.length && <span className={`inline-block w-2 h-3.5 ${tone === "rose" ? "bg-rose-500" : tone === "amber" ? "bg-amber-500" : "bg-emerald-500"} ml-1 align-middle animate-blink`} />}</div>;
+}
 
-      return () => clearInterval(interval);
-    }
-  }, [mode]);
+export function MaintenanceAdvisory({ anomalyDetected, detector, health, telemetry }: MaintenanceAdvisoryProps) {
+  const fault = detector?.faultType ?? "NONE";
+  const component = detector?.componentId?.replace("_", " ").toUpperCase() ?? "ENGINE";
+  const residual = detector ? String(Math.round(detector.residual)) : "0";
+  const healthValue = (health?.healthIndex ?? 100).toFixed(1);
+  const reliability = ((health?.missionReliability ?? 1) * 100).toFixed(1);
+  const rul = health?.rulHours === null || health?.rulHours === undefined ? "insufficient trend" : `${health.rulHours.toFixed(1)} estimated hours`;
+  const message = fault === "SENSOR_SUSPECT"
+    ? `SENSOR CHECK: ${component} channel diverges from correlated exhaust and fuel-flow channels by ${residual} sigma. Engine health remains ${healthValue}. Verify the CHT sensor and wiring before maintenance action.`
+    : anomalyDetected
+      ? `${fault} indication at ${component}. Physics residual ${residual} sigma. Engine health ${healthValue}; estimated RUL ${rul}; mission reliability ${reliability}%. Review oil pressure ${Math.round(telemetry?.oilPressure ?? 0)} psi and telemetry before dispatch.`
+      : `Nominal simulated operation. Health ${healthValue}; six-hour mission reliability ${reliability}%; maximum residual ${residual} sigma. RUL status: ${rul}.`;
+  const tone = fault === "SENSOR_SUSPECT" ? "amber" : anomalyDetected ? "rose" : "emerald";
 
   return (
     <div className="bg-zinc-900 border border-zinc-800 rounded-sm p-4 min-h-[160px] flex flex-col">
-      <div className="text-zinc-400 text-xs tracking-wider uppercase mb-3 font-semibold">
-        AI MAINTENANCE ADVISORY
-      </div>
-      <div className="font-mono text-sm leading-relaxed flex-1">
-        {!anomalyDetected ? (
-          <div className="text-zinc-300 flex items-start mt-1">
-            <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-2 mt-1.5 shrink-0"></span>
-            <span>{NORMAL_MESSAGE}</span>
-          </div>
-        ) : (
-          <div className="text-rose-500">
-            <span>{displayedText}</span>
-            <span className={`inline-block w-2 h-3.5 bg-rose-500 ml-1 align-middle animate-blink`}></span>
-          </div>
-        )}
-      </div>
+      <div className="text-zinc-400 text-xs tracking-wider uppercase mb-3 font-semibold">AI MAINTENANCE ADVISORY</div>
+      <div className="font-mono text-sm leading-relaxed flex-1"><Typewriter text={message} tone={tone} /></div>
+      <div className="mt-3 border-t border-zinc-800 pt-2 text-[10px] font-mono text-zinc-500">Template-based demo advisory. LLM integration planned. Draft, requires technician review.</div>
     </div>
   );
-};
+}
